@@ -1,25 +1,138 @@
-Components.utils.import("resource://gre/modules/reflect.jsm");
+let scope = { };
+
+Components.utils.import("resource://gre/modules/reflect.jsm", scope);
+
+let has = (obj, field) => Object.prototype.hasOwnProperty.call(obj, field);
+
+
+var AST = AST || { };
+
+AST.AST = function (program) {
+    this.program = program;
+};
+
+AST.parse = function (str) {
+    return scope.Reflect.parse(str);
+};
+
+AST.create = function (str) {
+    return new AST.AST(AST.parse(str));
+};
+
+let evaluateMemberExpression;
+
+let evaluate = function (node, ns) {
+    switch (node.type) {
+    case "Literal":
+        return node.value;
+    case "Identifier":
+        if (has(ns, node.name))
+            return ns[node.name];
+        else
+            throw "Identifier \"" + node.name + "\" not found";
+    case "MemberExpression":
+        return evaluateMemberExpression(node, ns);
+    case "BinaryExpression":
+        const left  = () => evaluate(node.left, ns);
+        const right = () => evaluate(node.right, ns);
+        switch (node.operator) {
+        case "+":
+            return left() + right();
+        default:
+            throw "Don't know how to evaluate binary operator \"" + node.operator + "\"";
+        }
+    default:
+        throw "Can't evaluate node of type \"" + node.type + "\"";
+    }
+};
+
+evaluateMemberExpression = function (node, ns) {
+    let field;
+
+    switch (node.type) {
+    case "Identifier":
+        field = node.name;
+        break;
+    case "MemberExpression":
+        field = node.computed ? evaluate(node.property) : node.property.name;
+        ns    = evaluateMemberExpression(node.object, ns);
+        break;
+    default:
+        throw "Can't handle " + node.type;
+    }
+
+    if (has(ns, field)) {
+        return ns[field];
+    } else {
+        throw "Field \"" + field + "\" not found";
+    }
+
+};
+
+AST.AST.prototype.evaluate = evaluate;
+
+let key = prop => prop.key[prop.key.type === "Literal" ? "value" : "name"];
 
 let specialExpressions = {
     ObjectExpression: {
-        ObjectLiteral: function (node) {
+        ObjectLiteral: function (node, callback) {
             const hash = { };
             for (let property of node.properties) {
-                hash[property.key[property.key.type === "Literal" ? "value" : "name"]] = property.value;
+                hash[key(property)] = property.value;
             }
-            return hash;
+            return callback.call(this, hash);
+        },
+        KeyValuePair: function (node, callback) {
+            let done = false;
+            for (let property of node.properties) {
+                if (callback.call(key(property), property.value)) {
+                    done = true;
+                }
+            }
+            return done;
         }
     }
 };
 
-function parseAndVisit(str, callbacks) {
+let specialStatements = {
+    VariableDeclaration: {
+        Variable: function (node, callback) {
+            let done = false;
+            for (let decl of node.declarations) {
+                if (callback.call(this, decl)) {
+                    done = true;
+                }
+            }
+            return done;
+        }
+    }
+}
+
+AST.AST.prototype.visit = function (callbacks) {
+
+    const self = this;
+
+    this.program.body.forEach(doStatement);
 
     function doStatement(node) {
-        if (callbacks.hasOwnProperty(node.type) && callbacks[node.type](node))
+
+        if (has(callbacks, node.type) && callbacks[node.type].call(self, node))
             return;
+
+        let special = specialStatements[node.type];
+
+        if (special) {
+            for (let key in special) {
+                if (has(callbacks, key) && special[key].call(self, node, callbacks[key])) {
+                    done = true;
+                }
+            }
+        }
+
+
         switch (node.type) {
         case "BlockStatement":
-            doStatements(node.body);
+            node.body.forEach(doStatement);
             break;
         case "ExpressionStatement":
             doExpression(node.expression);
@@ -82,24 +195,17 @@ function parseAndVisit(str, callbacks) {
         }
     }
 
-    function doStatements(stmts) {
-        for (let stmt of stmts) {
-            doStatement(stmt);
-        }
-    }
-
     function doExpression(node) {
         let done = false;
 
-        if (callbacks.hasOwnProperty(node.type) && callbacks[node.type](node))
+        if (has(callbacks, node.type) && callbacks[node.type].call(self, node))
             done = true;
 
         let special = specialExpressions[node.type];
 
         if (special) {
             for (let key in special) {
-                if (callbacks.hasOwnProperty(key) &&
-                    callbacks[key](special[key](node))) {
+                if (has(callbacks, key) && special[key].call(self, node, callbacks[key])) {
                     done = true;
                 }
             }
@@ -109,44 +215,27 @@ function parseAndVisit(str, callbacks) {
 
         switch (node.type) {
         case "ArrayExpression":
-            for (let elem of node.elements) {
-                if (elem) {
-                    doExpression(elem);
-                }
-            }
+            node.elements.filter(x => x).forEach(doExpression);
             break;
         case "ObjectExpression":
-            // dumpln("Going over properties!");
-            for (let prop of node.properties) {
-                doExpression(prop.value);
-            }
+            node.properties.map(x => x.value).forEach(doExpression);
             break;
         case "FunctionExpression":
-            switch (node.body.type) {
-            case "BlockStatement":
+            if (node.body.type === "BlockStatement")
                 doStatement(node.body);
-                break;
-            default:
+            else
                 doExpression(node.body);
-                break;
-            }
             break;
         case "AssignmentExpression":
             doExpression(node.right);
             break;
         case "CallExpression":
-            for (let arg of node.arguments) {
-                doExpression(arg);
-            }
             doExpression(node.callee);
+            node.arguments.forEach(doExpression);
             break;
         default:
             // dumpln("Skipping expression " + node.type);
         }
     }
 
-    const program = Reflect.parse(str);
-
-    doStatements(program.body);
-
-}
+};
