@@ -1,3 +1,5 @@
+{
+
 let scope = { };
 
 Components.utils.import("resource://gre/modules/reflect.jsm", scope);
@@ -21,7 +23,7 @@ AST.create = function (str) {
 
 let evaluateMemberExpression;
 
-let evalNode = function (node, ns) {
+let evaluate = function (node, ns) {
     switch (node.type) {
     case "Literal":
         return node.value;
@@ -33,8 +35,8 @@ let evalNode = function (node, ns) {
     case "MemberExpression":
         return evaluateMemberExpression(node, ns);
     case "BinaryExpression":
-        const left  = () => evalNode(node.left, ns);
-        const right = () => evalNode(node.right, ns);
+        const left  = () => evaluate(node.left, ns);
+        const right = () => evaluate(node.right, ns);
         switch (node.operator) {
         case "+":
             return left() + right();
@@ -54,7 +56,7 @@ evaluateMemberExpression = function (node, ns) {
         field = node.name;
         break;
     case "MemberExpression":
-        field = node.computed ? evalNode(node.property) : node.property.name;
+        field = node.computed ? evaluate(node.property) : node.property.name;
         ns    = evaluateMemberExpression(node.object, ns);
         break;
     default:
@@ -69,7 +71,7 @@ evaluateMemberExpression = function (node, ns) {
 
 };
 
-AST.AST.prototype.evaluate = evalNode;
+AST.AST.prototype.evaluate = evaluate;
 
 let key = prop => prop.key[prop.key.type === "Literal" ? "value" : "name"];
 
@@ -239,3 +241,5 @@ AST.AST.prototype.visit = function (callbacks) {
     }
 
 };
+
+}
