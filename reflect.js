@@ -73,21 +73,21 @@ evaluateMemberExpression = function (node, ns) {
 
 AST.AST.prototype.evaluate = evaluate;
 
-let key = prop => prop.key[prop.key.type === "Literal" ? "value" : "name"];
+let keyOf = prop => prop.key[prop.key.type === "Literal" ? "value" : "name"];
 
 let specialExpressions = {
     ObjectExpression: {
         ObjectLiteral: function (node, callback) {
             const hash = { };
             for (let property of node.properties) {
-                hash[key(property)] = property.value;
+                hash[keyOf(property)] = property.value;
             }
             return callback.call(this, hash);
         },
         KeyValuePair: function (node, callback) {
             let done = false;
             for (let property of node.properties) {
-                if (callback.call(key(property), property.value)) {
+                if (callback.call(this, keyOf(property), property.value)) {
                     done = true;
                 }
             }
@@ -108,7 +108,7 @@ let specialStatements = {
             return done;
         }
     }
-}
+};
 
 AST.AST.prototype.visit = function (callbacks) {
 
