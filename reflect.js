@@ -101,7 +101,8 @@ let specialStatements = {
         Variable: function (node, callback) {
             let done = false;
             for (let decl of node.declarations) {
-                if (callback.call(this, decl)) {
+                if (decl.id.type === "Identifier" &&
+                    callback.call(this, decl.id.name, decl.init)) {
                     done = true;
                 }
             }
