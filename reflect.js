@@ -24,6 +24,7 @@
     let evaluateMemberExpression;
 
     let evaluate = function (node, ns) {
+        ns = ns || {};
         switch (node.type) {
         case "Literal":
             return node.value;
@@ -34,6 +35,13 @@
                 throw "Identifier \"" + node.name + "\" not found";
         case "MemberExpression":
             return evaluateMemberExpression(node, ns);
+        case "UnaryExpression":
+            switch (node.operator) {
+            case "-":
+                return -evaluate(node.argument);
+            default:
+                throw "Don't know how to evaluate unary operator \"" + node.operator + "\"";
+            }
         case "BinaryExpression":
             const left  = () => evaluate(node.left, ns);
             const right = () => evaluate(node.right, ns);
@@ -73,9 +81,9 @@
 
     AST.AST.prototype.evaluate = evaluate;
 
-    let keyOf = prop => prop.key[prop.key.type === "Literal" ? "value" : "name"];
+    const keyOf = prop => prop.key[prop.key.type === "Literal" ? "value" : "name"];
 
-    let specialExpressions = {
+    const specialExpressions = {
         ObjectExpression: {
             ObjectLiteral: function (node, callback) {
                 const hash = { };
@@ -96,7 +104,7 @@
         }
     };
 
-    let specialStatements = {
+    const specialStatements = {
         VariableDeclaration: {
             Variable: function (node, callback) {
                 let done = false;
