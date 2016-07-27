@@ -100,7 +100,7 @@
 
     };
 
-    AST.AST.prototype.evaluate = evaluate;
+    AST.evaluate = AST.AST.prototype.evaluate = evaluate;
 
     const keyOf = prop => prop.key[prop.key.type === "Literal" ? "value" : "name"];
 
