@@ -110,8 +110,8 @@ it does not already exist.
   Recursively visits the nodes of the abstract syntax tree whose root
   is contained in the `ast` object.  `callbacks` is a mapping of node
   names to functions that are invoked when nodes of the named type are
-  encountered.  The set of node types is too extensive to enumerated
-  here; see the
+  encountered.  The set of node types is too extensive to be
+  enumerated here; see the
   [Parser API](https://developer.mozilla.org/en-US/docs/Mozilla/Projects/SpiderMonkey/Parser_API)
   documentation for a complete list.
   
@@ -140,7 +140,8 @@ it does not already exist.
     `{ foo: 1, "bar": 2 }`.  An `ObjectExpression` callback would be
     given a single node with the following structure:
     
-    ```{
+    ```
+    {
       type: "ObjectExpression",
       properties: [
         {
@@ -155,14 +156,17 @@ it does not already exist.
           kind: "init"
         }
       ]
-    }```
+    }
+    ```
     
     An `ObjectLiteral` callback would receive a simplified structure:
     
-    ```{
+    ```
+    {
       foo: { type: "Literal", value: 1 },
       bar: { type: "Literal", value: 2 }
-    }```
+    }
+    ```
     
     If an `ObjectLiteral` callback returns a truthy value, recursion
     does not proceed into any descendent of the `ObjectExpression`
