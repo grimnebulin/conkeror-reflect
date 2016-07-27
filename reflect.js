@@ -67,6 +67,8 @@
             switch (node.operator) {
             case "+":
                 return left() + right();
+            case "-":
+                return left() - right();
             default:
                 throw "Don't know how to evaluate binary operator \"" + node.operator + "\"";
             }
