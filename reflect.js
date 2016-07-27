@@ -131,7 +131,7 @@
                 let done = false;
                 for (let decl of node.declarations) {
                     if (decl.id.type === "Identifier" &&
-                        callback.call(this, decl.id.name, decl.init)) {
+                        callback.call(this, decl.id.name, decl.init, node.kind)) {
                         done = true;
                     }
                 }
