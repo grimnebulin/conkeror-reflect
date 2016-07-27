@@ -57,7 +57,7 @@
         case "UnaryExpression":
             switch (node.operator) {
             case "-":
-                return -evaluate(node.argument);
+                return -evaluate(node.argument, ns);
             default:
                 throw "Don't know how to evaluate unary operator \"" + node.operator + "\"";
             }
@@ -85,7 +85,7 @@
             field = node.name;
             break;
         case "MemberExpression":
-            field = node.computed ? evaluate(node.property) : node.property.name;
+            field = node.computed ? evaluate(node.property, ns) : node.property.name;
             ns    = evaluateMemberExpression(node.object, ns);
             break;
         default:
