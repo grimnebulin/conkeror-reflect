@@ -247,10 +247,10 @@
 
             switch (node.type) {
             case "ArrayExpression":
-                node.elements.filter(x => x).forEach(doExpression);
+                node.elements.forEach(x => { if (x) doExpression(x) });
                 break;
             case "ObjectExpression":
-                node.properties.map(x => x.value).forEach(doExpression);
+                node.properties.forEach(x => doExpression(x.value));
                 break;
             case "FunctionExpression":
                 if (node.body.type === "BlockStatement")
