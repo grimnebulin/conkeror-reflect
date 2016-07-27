@@ -94,7 +94,7 @@ it does not already exist.
   
   `namespace` may contain nested arrays and objects:
   
-      const node  = AST.parse("a[a[0]]").body[0].expression
+      const node  = AST.parse("a[a[0]]").body[0].expression;
       const zero  = AST.evaluate(node, { a: [ 0, 1, 2 ]});
       const three = AST.evaluate(node, { a: [ 2, 1, 3 ]});
 
@@ -179,8 +179,9 @@ it does not already exist.
     The callback receives two arguments: the key string and the value
     node.  For example, if the object literal in the previous item
     triggered a `KeyValuePair` callback, the callback would be called
-    twice, once with the arguments `"foo"` and the `1` literal, and a
-    second time with the arguments `"bar"` and the `2` literal.
+    twice, once with the arguments `"foo"` and the `1` literal node,
+    and a second time with the arguments `"bar"` and the `2` literal
+    node.
     
   - `Variable`
   
