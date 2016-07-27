@@ -61,20 +61,20 @@ it does not already exist.
 
 ## Static methods
 
-- AST.parse(code)
+- `AST.parse(code)`
 
   A thin layer atop the browser's Parser API, this function just
   passes a string of Javascript code to the parser and returns the
   root `Program` node that it produces.  An exception is raised if
   the code is not well-formed.
   
-- AST.create(code)
+- `AST.create(code)`
 
   This constructor function parses a string of Javascript code as
   `AST.parse` does, but wraps the root of the AST in an object of the
   class `AST.AST`, which is returned.
 
-- AST.evaluate(node, namespace)
+- `AST.evaluate(node, namespace)`
 
   Evaluates an AST expression node.  Only a small set of Parser API
   expression types are supported:
@@ -89,8 +89,8 @@ it does not already exist.
   encountered.
 
   `Identifier` expressions are looked up in the `namespace` argument,
-  if one if provided.  Evaluating an identifier that is not defined in
-  that argument causes an exception to be thrown.
+  if one if provided.  Evaluating an identifier that is not defined
+  there causes an exception to be thrown.
   
   `namespace` may contain nested arrays and objects:
   
@@ -100,12 +100,12 @@ it does not already exist.
 
 ## Instance methods
 
-- ast.evaluate(node)
+- `ast.evaluate(node)`
 
   An instance version of the static `evaluate` function described
   above.
 
-- ast.visit(callbacks)
+- `ast.visit(callbacks)`
   
   Recursively visits the nodes of the abstract syntax tree whose root
   is contained in the `ast` object.  `callbacks` is a mapping of node
