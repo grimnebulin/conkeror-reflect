@@ -1,7 +1,7 @@
 # SUMMARY
 
-`conkeror-reflect` is a package that provides a higher-level interface
-to the Mozilla
+`conkeror-reflect` is a Conkeror package that provides a higher-level
+interface to the Mozilla
 [Parser API](https://developer.mozilla.org/en-US/docs/Mozilla/Projects/SpiderMonkey/Parser_API).
 Javascript code can be parsed into an abstract syntax tree which can
 then be recursively visited and, to a limited extent, evaluated.
