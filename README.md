@@ -44,12 +44,12 @@ Using `conkeror-reflect` you could scan the source code for all object
 literals that have those two keys and accumulate a mapping of `name`
 to `src`:
 
-    const sources = { };
+    const sources = new Map;
 
     AST.create(jscode).visit({
       ObjectLiteral: function (attr) {
         if ("name" in attr && "src" in attr) {
-          sources[attr.name] = this.evaluate(attr.src);
+          sources.set(attr.name, this.evaluate(attr.src));
         }
       }
     });

@@ -20,11 +20,27 @@
 
 
 {
-    let scope = { };
+    const reflect = (function () {
+        const scope = { };
+        Components.utils.import("resource://gre/modules/reflect.jsm", scope);
+        return scope.Reflect;
+    })();
 
-    Components.utils.import("resource://gre/modules/reflect.jsm", scope);
-
-    let has = (obj, field) => Object.prototype.hasOwnProperty.call(obj, field);
+    const toMap = function (obj) {
+        if (!obj) {
+            return new Map;
+        } else if (obj instanceof Map) {
+            return obj;
+        } else {
+            const map = new Map;
+            for (let name in obj) {
+                if (Object.prototype.hasOwnProperty.call(obj, name)) {
+                    map.set(name, obj[name]);
+                }
+            }
+            return map;
+        }
+    };
 
     var AST = AST || { };
 
@@ -33,7 +49,7 @@
     };
 
     AST.parse = function (str) {
-        return scope.Reflect.parse(str);
+        return reflect.parse(str);
     };
 
     AST.create = function (str) {
@@ -43,15 +59,16 @@
     let evaluateMemberExpression;
 
     let evaluate = function (node, ns) {
-        ns = ns || {};
+        ns = toMap(ns);
         switch (node.type) {
         case "Literal":
             return node.value;
         case "Identifier":
-            if (has(ns, node.name))
-                return ns[node.name];
-            else
+            if (ns.has(node.name)) {
+                return ns.get(node.name);
+            } else {
                 throw "Identifier \"" + node.name + "\" not found";
+            }
         case "MemberExpression":
             return evaluateMemberExpression(node, ns);
         case "UnaryExpression":
@@ -92,8 +109,8 @@
             throw "Can't handle " + node.type;
         }
 
-        if (has(ns, field)) {
-            return ns[field];
+        if (ns.has(field)) {
+            return ns.get(field);
         } else {
             throw "Field \"" + field + "\" not found";
         }
@@ -107,11 +124,11 @@
     const specialExpressions = {
         ObjectExpression: {
             ObjectLiteral: function (node, callback) {
-                const hash = { };
+                const map = new Map;
                 for (let property of node.properties) {
-                    hash[keyOf(property)] = property.value;
+                    map.set(keyOf(property), property.value);
                 }
-                return callback.call(this, hash);
+                return callback.call(this, map);
             },
             KeyValuePair: function (node, callback) {
                 let done = false;
@@ -148,19 +165,18 @@
 
         function doStatement(node) {
 
-            if (has(callbacks, node.type) && callbacks[node.type].call(self, node))
+            if (node.type in callbacks && callbacks[node.type].call(self, node))
                 return;
 
             let special = specialStatements[node.type];
 
             if (special) {
                 for (let key in special) {
-                    if (has(callbacks, key) && special[key].call(self, node, callbacks[key])) {
+                    if (key in callbacks && special[key].call(self, node, callbacks[key])) {
                         done = true;
                     }
                 }
             }
-
 
             switch (node.type) {
             case "BlockStatement":
@@ -230,14 +246,14 @@
         function doExpression(node) {
             let done = false;
 
-            if (has(callbacks, node.type) && callbacks[node.type].call(self, node))
+            if (node.type in callbacks && callbacks[node.type].call(self, node))
                 done = true;
 
             let special = specialExpressions[node.type];
 
             if (special) {
                 for (let key in special) {
-                    if (has(callbacks, key) && special[key].call(self, node, callbacks[key])) {
+                    if (key in callbacks && special[key].call(self, node, callbacks[key])) {
                         done = true;
                     }
                 }
